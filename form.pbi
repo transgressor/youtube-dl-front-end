@@ -523,7 +523,7 @@ Module Form
   EndProcedure
   
   Procedure Event_Help1()
-    RunProgram("https://github.com/transgressor/youtube-dl-frontend")
+    RunProgram("https://github.com/transgressor/youtube-dl-front-end")
   EndProcedure
   
   Procedure Event_Help2()
@@ -855,8 +855,8 @@ Module Form
 EndModule
 
 ; IDE Options = PureBasic 5.71 LTS (Windows - x64)
-; CursorPosition = 788
-; FirstLine = 206
+; CursorPosition = 524
+; FirstLine = 192
 ; Folding = HAAAAA5
 ; Markers = 584
 ; EnableXP

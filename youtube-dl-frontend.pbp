@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="..\..\..\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-07-07 17:06" user="Nocturn" host="DESKTOP-LCQS72S"/>
+    <lastopen date="2020-07-07 17:43" user="Nocturn" host="DESKTOP-LCQS72S"/>
   </section>
   <section name="files">
     <file name="core.pbi">
@@ -16,10 +16,10 @@
     </file>
     <file name="form.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
-      <fingerprint md5="5a89d8717b446a8831fd56672d98a39f"/>
+      <fingerprint md5="9b1a51429742e36f9932669768cce588"/>
     </file>
     <file name="main.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
       <fingerprint md5="940a0586b40a58df1210bf582fbdbf03"/>
     </file>
     <file name="thread.pbi">
