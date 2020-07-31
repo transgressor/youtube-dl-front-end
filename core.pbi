@@ -75,6 +75,8 @@ DeclareModule Core
   *Core\FilePreset$       = *Core\DataPath$ + "preset.json"
   *Core\FileSubscription$ = *Core\DataPath$ + "subscription.json"
   
+
+  
   ;*************************************************************************
   ;- Declaration
   ;*************************************************************************
@@ -120,6 +122,8 @@ Module Core
       ProcedureReturn #True
     Else
       Debug "[Core:Config] Init"
+      CreateDirectory(GetUserDirectory(#PB_Directory_ProgramData) + "transgressor")
+      CreateDirectory(GetUserDirectory(#PB_Directory_ProgramData) + "transgressor\youtube-dl-gui\")
       If ConfigSave() ;# Try init if load fails
         ProcedureReturn #True
       EndIf
@@ -128,7 +132,7 @@ Module Core
   
   Procedure.i ConfigSave()
     Protected.i Config = CreateJSON(#PB_Any)
-    If Config
+    If Config 
       InsertJSONStructure(JSONValue(Config), *Config, sConfig)
       If SaveJSON(Config, *Core\FileConfig$, #PB_JSON_PrettyPrint)
         Debug "[Core:Config] JSON saved"
@@ -234,8 +238,8 @@ Module Core
   DisableExplicit
   
 EndModule
-; IDE Options = PureBasic 5.71 LTS (Windows - x64)
-; CursorPosition = 70
-; FirstLine = 48
-; Folding = D5
+; IDE Options = PureBasic 5.72 (Windows - x64)
+; CursorPosition = 72
+; FirstLine = 71
+; Folding = L5
 ; EnableXP

@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.71 LTS (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.72 (Windows - x64)">
   <section name="config">
     <options closefiles="1" openmode="3" name="youtube-dl-front-end"/>
   </section>
   <section name="data">
     <explorer view="..\..\..\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-07-07 17:43" user="Nocturn" host="DESKTOP-LCQS72S"/>
+    <lastopen date="2020-07-24 17:13" user="Nocturn" host="DESKTOP-0473I6V"/>
   </section>
   <section name="files">
     <file name="core.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
-      <fingerprint md5="4140fce8cc24fa87c0184cf9ba45ff6b"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="d24f1dae5f666dcedc2369dc37d82068"/>
     </file>
     <file name="form.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
-      <fingerprint md5="9b1a51429742e36f9932669768cce588"/>
+      <fingerprint md5="5ab541c54e92bad0c2f26a462042e0cc"/>
     </file>
     <file name="main.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
       <fingerprint md5="940a0586b40a58df1210bf582fbdbf03"/>
     </file>
     <file name="thread.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
-      <fingerprint md5="88897fc92ddc98c06cd676f4a2ea5587"/>
+      <fingerprint md5="f3f3e669838e9b6ffff14cc438b3d221"/>
     </file>
   </section>
   <section name="targets">
     <target name="Default Target" enabled="1" default="1">
       <inputfile value="main.pb"/>
       <outputfile value="..\bin\youtube-dl-frontend.exe"/>
-      <compiler version="PureBasic 5.71 LTS (Windows - x64)"/>
+      <compiler version="PureBasic 5.72 (Windows - x64)"/>
       <executable value="..\bin\youtube-dl-frontend.exe"/>
       <directory value="..\bin\"/>
       <options thread="1" xpskin="1" dpiaware="1" debug="1"/>

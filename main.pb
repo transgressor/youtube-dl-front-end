@@ -26,6 +26,6 @@ If Core::ConfigLoad() And Core::PresetLoad()
 EndIf
 
 End
-; IDE Options = PureBasic 5.71 LTS (Windows - x64)
+; IDE Options = PureBasic 5.72 (Windows - x64)
 ; CursorPosition = 27
 ; EnableXP

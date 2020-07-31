@@ -33,6 +33,7 @@ DeclareModule Form
     #S_Container
     #S_Url1
     #S_Url2
+    #S_Url3
     #S_Path1
     #S_Path2
     #S_Path3
@@ -141,6 +142,7 @@ Module Form
   
   Declare   Event_Simple_Path()
   Declare   Event_Simple_Task()
+  Declare   Event_Simple_Import()
   
   Declare   Event_Advanced_Add()
   Declare   Event_Advanced_Edit()
@@ -274,7 +276,9 @@ Module Form
       ;# Container: Simple
       If ContainerGadget(#S_Container, 0, 80, 600, 248)
         TextGadget(#S_Url1, 10, 0, 580, 15, "URL:")
-        StringGadget(#S_Url2, 10, 15, 580, 20, "")
+        StringGadget(#S_Url2, 10, 15, 470, 20, "")
+        ButtonGadget(#S_Url3, 490, 15, 100, 20, "TXT")
+        
         TextGadget(#S_Path1, 10, 40, 580, 15, "Path:")
         StringGadget(#S_Path2, 10, 55, 470, 20, Core::*Config\DefaultDir$)
         ButtonGadget(#S_Path3, 490, 55, 100, 20, "...")
@@ -356,6 +360,7 @@ Module Form
       BindGadgetEvent(#Header_Button2, @Event_Advanced())
       
       BindGadgetEvent(#S_Url2, @Clipboard(), #PB_EventType_Focus)
+      BindGadgetEvent(#S_Url3, @Event_Simple_Import())
       BindGadgetEvent(#S_Path3, @Event_Simple_Path())
       BindGadgetEvent(#S_Download, @Event_Simple_Task())
       
@@ -392,7 +397,8 @@ Module Form
     ResizeGadget(#Header_Container, 0, 0, Width, 70)
     
     ResizeGadget(#S_Container, 0, 80, Width, Height - MenuHeight() - 80)
-    ResizeGadget(#S_Url2, 10, 15, GadgetWidth(#S_Container) - 20, 20)
+    ResizeGadget(#S_Url2, 10, 15, GadgetWidth(#S_Container) - 130, 20)
+    ResizeGadget(#S_Url3, GadgetWidth(#S_Container) - 110, 15, 100, 20)
     ResizeGadget(#S_Path2, 10, 55, GadgetWidth(#S_Container) - 130, 20)
     ResizeGadget(#S_Path3, GadgetWidth(#S_Container) - 110, 55, 100, 20)
     ResizeGadget(#S_Preset2, 10, 95, GadgetWidth(#S_Container) - 20, 20)
@@ -569,6 +575,50 @@ Module Form
     FreeStructure(*Task)
     
   EndProcedure
+  
+  Procedure Event_Simple_Import()
+    
+    Protected.s FilePath$ = OpenFileRequester("Select TXT", Core::*Config\DefaultDir$, "Text file | *.txt", 0)
+    Protected.i File = ReadFile(#PB_Any, FilePath$)
+    Debug FilePath$
+    If File
+      While Eof(File) = 0
+        
+        ;TODO
+        Protected.s Path$  = GetGadgetText(#S_Path2)
+        Protected.i Id     = GetGadgetState(#S_Preset2)
+        Protected.s Param$
+        Protected.s Url$   = ReadString(File)
+        
+        ;# Check Preset and Prepare Task
+        If SelectElement(Preset(), Id) And Url$
+          Protected *Task.sTask = AllocateStructure(sTask)
+          Param$ = MakeParam(Core::Preset()\Param$, Url$, Path$)
+          With *Task
+            \Url$   = Url$
+            \Param$ = Param$
+          EndWith
+        EndIf
+        
+        ;# Add Task To List
+        Debug *Task\Param$
+        AddElement(Core::Task())
+        With Core::Task()
+          \Name$  = "Untitled (Quick)"
+          \Url$   = *Task\Url$
+          \Param$ = *Task\Param$
+        EndWith
+        FreeStructure(*Task)
+        
+        
+        ;TODO
+        
+      Wend
+    EndIf
+    
+    
+  EndProcedure
+  
   
   ;# Advanced
   Procedure Event_Advanced_Add()
@@ -855,8 +905,8 @@ Module Form
 EndModule
 
 ; IDE Options = PureBasic 5.71 LTS (Windows - x64)
-; CursorPosition = 524
-; FirstLine = 192
-; Folding = HAAAAA5
-; Markers = 584
+; CursorPosition = 607
+; FirstLine = 384
+; Folding = nAAwAAw
+; Markers = 634
 ; EnableXP

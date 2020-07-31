@@ -317,6 +317,7 @@ Module Thread
   
 EndModule
 ; IDE Options = PureBasic 5.71 LTS (Windows - x64)
-; CursorPosition = 32
-; Folding = FA-
+; CursorPosition = 231
+; FirstLine = 103
+; Folding = FI-
 ; EnableXP
