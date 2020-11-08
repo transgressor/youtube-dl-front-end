@@ -31,16 +31,25 @@ DeclareModule Thread
     Name$
     Url$
     Param$
+    Output$
     ExitCode.i
   EndStructure
   
   ;*************************************************************************
   ;- Enumeration
   ;*************************************************************************
-  Enumeration Events #PB_Event_FirstCustomValue ;# No internal event conflict
+  Enumeration Events #PB_Event_FirstCustomValue ;# Avoid internal conflict
     #Task_Start
+    #Task_Process
     #Task_Finish
   EndEnumeration
+  
+  ;*************************************************************************
+  ;- Global
+  ;*************************************************************************
+  Global.i MaxThreads
+  Global.i ThreadRunning
+  Global Dim Thread.sThreadWorker(1)
   
   ;*************************************************************************
   ;- Declaration
@@ -64,8 +73,7 @@ Module Thread
   ;*************************************************************************
   Global.i MaxThreads = *Config\MaxThreads
   If MaxThreads = 0 : MaxThreads = 1 : EndIf
-  
-  Global Dim Thread.sThreadWorker(MaxThreads)
+  ReDim Thread.sThreadWorker(MaxThreads)
   
   ;*************************************************************************
   ;- Declaration
@@ -226,12 +234,28 @@ Module Thread
           If \Param$
             Debug "[Thread:Worker] Task Param: " +\Param$
             PostEvent(#Task_Start, #PB_Ignore, #PB_Ignore, #PB_Ignore, *Data)
+            Delay(10)
             
             ;# youtube-dl
             Protected.i Prog
-            Prog = RunProgram("youtube-dl", \Param$, "", #PB_Program_Open|#PB_Program_Error)
+            Debug "youtube-dl" + \Param$
+            Prog = RunProgram("youtube-dl", \Param$, "", #PB_Program_Open|#PB_Program_Error|#PB_Program_Read|#PB_Program_Hide)
             If IsProgram(Prog)
+              
               While ProgramRunning(Prog)
+                
+                If AvailableProgramOutput(Prog)
+                  
+                  ;# Output
+                  Protected.s Out$ = ReadProgramString(Prog)
+                  If Out$ <> ""
+                    \Output$ = Out$ + Chr(10)
+                    PostEvent(#Task_Process, #PB_Ignore, #PB_Ignore, #PB_Ignore, *Data)
+                    Delay(10) ;# 10ms seems balanced enough
+                  EndIf
+                  
+                EndIf
+                
                 If \Exit = #True
                   Debug "[Thread:Listener] Breaking while youtube-dl exec: " + Str(\ThreadId)
                   CloseProgram(Prog)
@@ -246,12 +270,15 @@ Module Thread
                 Delay(10)
               EndIf
               
+            Else
+              MessageRequester("Error", "youtube-dl not found, check your PATH variable or put the binaries in same directory as youtube-dl-frontend", #PB_MessageRequester_Error|#PB_MessageRequester_Ok)
             EndIf
             
             ;# Reset Thread Data
             \Name$    = ""
             \Url$     = ""
             \Param$   = ""
+            \Output$  = ""
             \ExitCode = 0
             
             ThreadPause(*Data)
@@ -316,8 +343,6 @@ Module Thread
   DisableExplicit
   
 EndModule
-; IDE Options = PureBasic 5.71 LTS (Windows - x64)
-; CursorPosition = 231
-; FirstLine = 103
-; Folding = FI-
+; IDE Options = PureBasic 5.72 (Windows - x64)
+; Folding = FA-
 ; EnableXP

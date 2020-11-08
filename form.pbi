@@ -21,6 +21,8 @@ DeclareModule Form
     #Men_Sub2
     #Men_Sub3
     #Men_Sub4
+    #Men_Sub5
+    #Men_Sub6
     #Men_Help1
     #Men_Help2
     #Men_Help3
@@ -64,6 +66,7 @@ DeclareModule Form
     #Info_Text1
     #Info_Text2
     #Info_Text3
+    #Info_Text4
     #Info_Link1
     #Info_Link2
   EndEnumeration
@@ -112,7 +115,7 @@ Module Form
   ;*************************************************************************
   ;- Global
   ;*************************************************************************
-  Global.i CurrentItem
+  Global.i SelectedItemId
   Global.i EventQuit
   
   ;*************************************************************************
@@ -136,6 +139,8 @@ Module Form
   Declare   Event_Subscription2()
   Declare   Event_Subscription3()
   Declare   Event_Subscription4()
+  Declare   Event_Subscription5()
+  Declare   Event_Subscription6()
   Declare   Event_Help1()
   Declare   Event_Help2()
   Declare   Event_Help3()
@@ -154,7 +159,7 @@ Module Form
   Declare   Event_Link2()
   
   ;# Helpers
-  Declare   Echo(String$)
+  Declare   Echo(String$, Type.i = 0)
   Declare   FillPresets(Gadget.i)
   Declare   FillSubs()
   Declare.i SelectItem()
@@ -213,11 +218,21 @@ Module Form
           *ThreadData = EventData
           EventText$ = "Start Download: " + *ThreadData\Name$ + ", url: " + *ThreadData\Url$
           Echo(EventText$)
+        Case Thread::#Task_Process
+          *ThreadData = EventData
+          EventText$ = *ThreadData\Output$
+          If EventText$ <> ""
+            Echo(EventText$)
+          EndIf
         Case Thread::#Task_Finish
           *ThreadData = EventData
           EventText$ = "Finished Download: " + *ThreadData\Name$ + ", url: " + *ThreadData\Url$ + " (exitcode: " + *ThreadData\ExitCode + ")"
-          Echo(EventText$)
-          Echo("Tasks remaining in queue: " + ListSize(Core::Task()))
+          Echo(EventText$, *ThreadData\ExitCode)
+          If ListSize(Core::Task()) = 0
+            Echo("Task(s) finished. Idle.")
+          Else
+            Echo("Tasks remaining in queue: " + ListSize(Core::Task()))
+          EndIf
       EndSelect
     Until EventQuit = #True
     
@@ -238,7 +253,7 @@ Module Form
   ;- Procedure: Main Window
   ;*************************************************************************
   Procedure.i MainWindow()
-    Protected.i Width = 600, Height = 350 ;# Smallest window size possible
+    Protected.i Width = 600, Height = 350
     
     If OpenWindow(#Main, Core::*Config\WindowX, Core::*Config\WindowY, Core::*Config\WindowW, Core::*Config\WindowH, Core::*Core\Title$, #PB_Window_SystemMenu|#PB_Window_SizeGadget|#PB_Window_MinimizeGadget|#PB_Window_MaximizeGadget)
       
@@ -258,6 +273,9 @@ Module Form
         MenuBar()
         MenuItem(#Men_Sub3, "Sort: Name Asc"        + Chr(9) + "",         ImageID(#Ico_Sort1))
         MenuItem(#Men_Sub4, "Sort: Name Desc"       + Chr(9) + "",         ImageID(#Ico_Sort2))
+        MenuBar()
+        MenuItem(#Men_Sub5, "Sort: Site Asc"        + Chr(9) + "",         ImageID(#Ico_Sort1))
+        MenuItem(#Men_Sub6, "Sort: Site Desc"       + Chr(9) + "",         ImageID(#Ico_Sort2))
         MenuTitle("Help")
         MenuItem(#Men_Help1, "View GitHub Page"     + Chr(9) + "F10",      ImageID(#Ico_Web))
         MenuItem(#Men_Help2, "youtube-dl Manual"    + Chr(9) + "F11",      ImageID(#Ico_Manual))
@@ -277,7 +295,7 @@ Module Form
       If ContainerGadget(#S_Container, 0, 80, 600, 248)
         TextGadget(#S_Url1, 10, 0, 580, 15, "URL:")
         StringGadget(#S_Url2, 10, 15, 470, 20, "")
-        ButtonGadget(#S_Url3, 490, 15, 100, 20, "TXT")
+        ButtonGadget(#S_Url3, 490, 15, 100, 20, "Import TXT")
         
         TextGadget(#S_Path1, 10, 40, 580, 15, "Path:")
         StringGadget(#S_Path2, 10, 55, 470, 20, Core::*Config\DefaultDir$)
@@ -287,11 +305,13 @@ Module Form
           FillPresets(#S_Preset2)
         EndIf
         ButtonImageGadget(#S_Download, 10, 120, 580, 30, ImageID(#Ico_Download))
-        If EditorGadget(#S_Console, 10, 160, 580, 80, #PB_Editor_ReadOnly)
+        
+        If ListIconGadget(#S_Console, 10, 160, 580, 80, "", 572, #PB_ListIcon_FullRowSelect|#LVS_NOCOLUMNHEADER)
+          SendMessage_(GadgetID(#S_Console), #LVM_SETBKCOLOR, 0, RGB(0, 0, 0))
+          SendMessage_(GadgetID(#S_Console), #LVM_SETTEXTCOLOR, 0, RGB(255, 255, 255))
           SetGadgetFont(#S_Console, FontID(#Font))
-          SetGadgetColor(#S_Console, #PB_Gadget_FrontColor, #White)
-          SetGadgetColor(#S_Console, #PB_Gadget_BackColor, #Black)
         EndIf
+        
         CloseGadgetList()
       EndIf
       
@@ -313,10 +333,9 @@ Module Form
         If ComboBoxGadget(#A_Preset2, 80,  135, 510, 20, #PB_ComboBox_Image)
           FillPresets(#A_Preset2)
         EndIf
-        If ListIconGadget(#A_List, 10, 160, 580, 80, "", 100, #PB_ListIcon_GridLines|#PB_ListIcon_CheckBoxes|#PB_ListIcon_FullRowSelect|#PB_ListIcon_AlwaysShowSelection|#LVS_NOCOLUMNHEADER)
+        If ListIconGadget(#A_List, 10, 160, 580, 80, "Name", 150, #PB_ListIcon_GridLines|#PB_ListIcon_CheckBoxes|#PB_ListIcon_FullRowSelect|#PB_ListIcon_AlwaysShowSelection)
+          AddGadgetColumn(#A_List, 2, "Site", 150)
           FillSubs()
-          ;# Win API: Autosize the (invisible) column header
-          SendMessage_(GadgetID(#A_List), #LVM_SETCOLUMNWIDTH, 0, #LVSCW_AUTOSIZE_USEHEADER)
         EndIf
         UpdateGadgets(#True)
       EndIf
@@ -340,7 +359,6 @@ Module Form
       AddKeyboardShortcut(#Main, #PB_Shortcut_F10, #Men_Help1)
       AddKeyboardShortcut(#Main, #PB_Shortcut_F11, #Men_Help2)
       
-      
       ;# Bind Events
       BindEvent(#PB_Event_CloseWindow, @Event_Quit(), #Main)
       BindEvent(#PB_Event_SizeWindow, @MainWindowResize(), #Main)
@@ -352,6 +370,8 @@ Module Form
       BindMenuEvent(#Men, #Men_Sub2, @Event_Subscription2())
       BindMenuEvent(#Men, #Men_Sub3, @Event_Subscription3())
       BindMenuEvent(#Men, #Men_Sub4, @Event_Subscription4())
+      BindMenuEvent(#Men, #Men_Sub5, @Event_Subscription5())
+      BindMenuEvent(#Men, #Men_Sub6, @Event_Subscription6())
       BindMenuEvent(#Men, #Men_Help1, @Event_Help1())
       BindMenuEvent(#Men, #Men_Help2, @Event_Help2())
       BindMenuEvent(#Men, #Men_Help3, @Event_Help3())
@@ -374,7 +394,7 @@ Module Form
       ;# Debug
       Echo("Presets found: " + Str(ListSize(Core::Preset())))
       Echo("Subscriptions found: " + Str(ListSize(Core::Sub())))
-      Echo("Worker Threads spawned: " + Str(Core::*Config\MaxThreads-1))
+      Echo("Worker Threads spawned: " + Str(Core::*Config\MaxThreads))
       Echo("Ready")
       
       ;# Resize gadgets after creation
@@ -413,8 +433,9 @@ Module Form
     ResizeGadget(#A_Path3, GadgetWidth(#A_Container) - 110, 95, 100, 20)
     ResizeGadget(#A_List, 10, 160, GadgetWidth(#A_Container) - 20, GadgetHeight(#A_Container) - 168)
     
-    ;# Win API: Autosize the (invisible) column header
+    ;# Win API: Autosize the (invisible) column headers
     SendMessage_(GadgetID(#A_List), #LVM_SETCOLUMNWIDTH, 0, #LVSCW_AUTOSIZE_USEHEADER)
+    SendMessage_(GadgetID(#S_Console), #LVM_SETCOLUMNWIDTH, 0, #LVSCW_AUTOSIZE_USEHEADER)
     
     ;# Save Window Parameters
     Core::*Config\WindowX    = WindowX(#Main)
@@ -433,7 +454,7 @@ Module Form
   ;- Procedure: Info Window
   ;*************************************************************************
   Procedure.i InfoWindow()
-    Protected.i Width = 240, Height = 200
+    Protected.i Width = 240, Height = 210
     
     If OpenWindow(#Info, #PB_Ignore, #PB_Ignore, Width, Height, "Info", #PB_Window_SystemMenu|#PB_Window_WindowCentered, WindowID(#Main))
       
@@ -443,14 +464,17 @@ Module Form
       ;# Gadgets
       ImageGadget(#Info_Icon, 0, 0, 240, 70, ImageID(#Img_Logo))
       
-      TextGadget(#Info_Text1, 10, 80, 220, 20, Core::*Core\Title$ + ", version " + Core::*Core\Version$ + ", " + Core::*Core\BuildDate$)
-      TextGadget(#Info_Text2, 10, 100, 220, 20, "by transgressor")
-      HyperLinkGadget(#Info_Link1, 10, 120, 220, 20, "www.whax.ch", 0)
+      TextGadget(#Info_Text1, 10, 80, 220, 30, Core::*Core\Title$ + ", version " + Core::*Core\Version$ + ", " + Core::*Core\BuildDate$)
+      
+      TextGadget(#Info_Text2, 10, 115, 220, 15, "by transgressor")
+      HyperLinkGadget(#Info_Link1, 10, 130, 220, 15, "www.whax.ch", 0)
       SetGadgetColor(#Info_Link1, #PB_Gadget_FrontColor, #Blue)
       
       TextGadget(#Info_Text3, 10, 150, 220, 20, "Uses 'Silk Icon Set' from Mark James:")
-      HyperLinkGadget(#Info_Link2, 10, 170, 220, 20, "www.famfamfam.com/lab/icons/silk/", 0)
+      HyperLinkGadget(#Info_Link2, 10, 165, 220, 20, "www.famfamfam.com/lab/icons/silk/", 0)
       SetGadgetColor(#Info_Link2, #PB_Gadget_FrontColor, #Blue)
+      
+      TextGadget(#Info_Text4, 10, 185, 220, 20, "Fuck The RIAA")
       
       ;# Bind Events
       BindEvent(#PB_Event_CloseWindow, @InfoWindowClose(), #Info)
@@ -492,7 +516,22 @@ Module Form
   ;*************************************************************************
   ;# Main
   Procedure Event_Quit()
-    EventQuit = #True
+    Protected.i x, Abort
+    ;# Check if tasks are still running...
+    For x = 0 To Thread::MaxThreads
+      If Thread::Thread(x)\ThreadId <> 1 ;# Skip Listener ThreadId
+        If Thread(x)\Pause = #False
+          Debug "Thread Nr: " + Thread(x)\ThreadId + ", Status: " + Thread(x)\Pause
+          Abort = MessageRequester("Warning", "youtube-dl is still busy, sure you want to abort and quit?", #PB_MessageRequester_Warning|#PB_MessageRequester_YesNo)
+          If Abort = #PB_MessageRequester_Yes
+            EventQuit = #True
+          EndIf
+          Break
+        Else
+          EventQuit = #True
+        EndIf
+      EndIf
+    Next x
   EndProcedure
   
   Procedure Event_Simple()
@@ -512,10 +551,12 @@ Module Form
   
   Procedure Event_Subscription1()
     SyncSub(0)
+    Event_Simple()
   EndProcedure
   
   Procedure Event_Subscription2()
     SyncSub(1)
+    Event_Simple()
   EndProcedure
   
   Procedure Event_Subscription3()
@@ -525,6 +566,16 @@ Module Form
   
   Procedure Event_Subscription4()
     SortStructuredList(Core::Sub(), #PB_Sort_NoCase|#PB_Sort_Descending, OffsetOf(sSubscription\Name$), TypeOf(sSubscription\Name$))
+    FillSubs()
+  EndProcedure
+  
+  Procedure Event_Subscription5()
+    SortStructuredList(Core::Sub(), #PB_Sort_NoCase|#PB_Sort_Ascending, OffsetOf(sSubscription\Site$), TypeOf(sSubscription\Site$))
+    FillSubs()
+  EndProcedure
+  
+  Procedure Event_Subscription6()
+    SortStructuredList(Core::Sub(), #PB_Sort_NoCase|#PB_Sort_Descending, OffsetOf(sSubscription\Site$), TypeOf(sSubscription\Site$))
     FillSubs()
   EndProcedure
   
@@ -563,16 +614,17 @@ Module Form
         \Url$   = Url$
         \Param$ = Param$
       EndWith
+      
+      ;# Add Task To List
+      AddElement(Core::Task())
+      With Core::Task()
+        \Name$  = "Untitled (Quick)"
+        \Url$   = *Task\Url$
+        \Param$ = *Task\Param$
+      EndWith
+      FreeStructure(*Task)
+      
     EndIf
-    
-    ;# Add Task To List
-    AddElement(Core::Task())
-    With Core::Task()
-      \Name$  = "Untitled (Quick)"
-      \Url$   = *Task\Url$
-      \Param$ = *Task\Param$
-    EndWith
-    FreeStructure(*Task)
     
   EndProcedure
   
@@ -580,11 +632,9 @@ Module Form
     
     Protected.s FilePath$ = OpenFileRequester("Select TXT", Core::*Config\DefaultDir$, "Text file | *.txt", 0)
     Protected.i File = ReadFile(#PB_Any, FilePath$)
-    Debug FilePath$
     If File
       While Eof(File) = 0
         
-        ;TODO
         Protected.s Path$  = GetGadgetText(#S_Path2)
         Protected.i Id     = GetGadgetState(#S_Preset2)
         Protected.s Param$
@@ -610,9 +660,6 @@ Module Form
         EndWith
         FreeStructure(*Task)
         
-        
-        ;TODO
-        
       Wend
     EndIf
     
@@ -622,7 +669,7 @@ Module Form
   
   ;# Advanced
   Procedure Event_Advanced_Add()
-    CurrentItem = -1
+    SelectedItemId = -1
     ResetList(Core::Sub())
     SetGadgetText(#A_Name2, "")
     SetGadgetText(#A_Url2, "")
@@ -642,6 +689,7 @@ Module Form
   EndProcedure
   
   Procedure Event_Advanced_Save()
+    
     Protected.s Name$  = GetGadgetText(#A_Name2)
     Protected.s Url$   = GetGadgetText(#A_Url2)
     Protected.s Path$  = GetGadgetText(#A_Path2)
@@ -649,13 +697,13 @@ Module Form
     
     ;# Check if new or existing
     If Name$ And Url$ And Path$
-      If CurrentItem <> -1
+      If SelectedItemId <> -1
         With Core::Sub()
           \Name$  = Name$
           \Url$   = Url$
           \Path$  = Path$
           \Preset = Preset
-          Debug "[Advanced] Updated Item: " + \Name$
+          Debug "[Form:Main] Updated Item: " + \Name$
         EndWith
       Else
         AddElement(Core::Sub())
@@ -664,7 +712,7 @@ Module Form
           \Url$   = Url$
           \Path$  = Path$
           \Preset = Preset
-          Debug "[Advanced] Added Item: " + \Name$
+          Debug "[Form:Main] Added Item: " + \Name$
         EndWith
       EndIf
       FillSubs()
@@ -682,7 +730,7 @@ Module Form
       SetGadgetText(#A_Path2,   "")
       SetGadgetText(#A_Path3,   "")
       SetGadgetText(#A_Preset2, "")
-      CurrentItem = -1
+      SelectedItemId = -1
       FillSubs()
     EndIf
   EndProcedure
@@ -706,10 +754,18 @@ Module Form
   ;*************************************************************************
   ;- Procedure - Helpers
   ;*************************************************************************
-  Procedure.i Echo(String$)
+  Procedure.i Echo(String$, Type.i = 0)
     If IsGadget(#S_Console)
-      AddGadgetItem(#S_Console, -1, String$)
-      SendMessage_(GadgetID(#S_Console), #EM_SETSEL, -1, -1) ;# Win API: Autoscroll
+      Select Type
+        Case 1
+          AddGadgetItem(#S_Console, -1, "[ERR] " + String$)
+          SetGadgetItemColor(#S_Console, CountGadgetItems(#S_Console) -1, #PB_Gadget_FrontColor, RGB(255,0,0))
+        Default
+          AddGadgetItem(#S_Console, -1, "[NFO] " + String$)
+          SetGadgetItemColor(#S_Console, CountGadgetItems(#S_Console) -1, #PB_Gadget_FrontColor, RGB(255,255,255))
+      EndSelect
+      SetGadgetItemColor(#S_Console, -1, #PB_Gadget_BackColor, RGB(0, 0, 0))
+      SendMessage_(GadgetID(#S_Console), #LVM_ENSUREVISIBLE, CountGadgetItems(#S_Console)-1, 0) ;# Win API: Autoscroll
     EndIf
   EndProcedure
   
@@ -735,7 +791,7 @@ Module Form
   Procedure FillSubs()
     ClearGadgetItems(#A_List)
     ForEach Core::Sub()
-      AddGadgetItem(#A_List, -1, Core::Sub()\Name$)
+      AddGadgetItem(#A_List, -1, Core::Sub()\Name$ + Chr(10) + Core::Sub()\Site$)
     Next Core::Sub()
   EndProcedure
   
@@ -744,7 +800,9 @@ Module Form
     If Item <> -1
       If SelectElement(Core::Sub(), Item)
         If Core::Sub()\Name$
-          CurrentItem = ListIndex(Core::Sub())
+          SelectedItemId = ListIndex(Core::Sub())
+          Debug "[Form:Main] Selected Item Index: " + SelectedItemId
+          Debug "[From:Main] Selected Item Name: " + Core::Sub()\Name$
           ProcedureReturn #True
         EndIf
       EndIf
@@ -904,9 +962,7 @@ Module Form
   
 EndModule
 
-; IDE Options = PureBasic 5.71 LTS (Windows - x64)
-; CursorPosition = 607
-; FirstLine = 384
-; Folding = nAAwAAw
-; Markers = 634
+; IDE Options = PureBasic 5.72 (Windows - x64)
+; Folding = HAAAAAA-
+; Markers = 681
 ; EnableXP

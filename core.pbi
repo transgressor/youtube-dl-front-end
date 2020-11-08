@@ -39,6 +39,7 @@ DeclareModule Core
     Name$
     Url$
     Path$
+    Site$
     Preset.i
   EndStructure
   
@@ -68,7 +69,7 @@ DeclareModule Core
   Global NewList Task.sTask()
   
   *Core\Title$            = "youtube-dl-front-end"
-  *Core\Version$          = "0.3"
+  *Core\Version$          = "0.4"
   *Core\BuildDate$        = FormatDate("%dd-%mm-%yyyy", Date())
   *Core\DataPath$         = GetUserDirectory(#PB_Directory_ProgramData) + "transgressor\youtube-dl-gui\"
   *Core\FileConfig$       = *Core\DataPath$ + "config.json"
@@ -117,8 +118,8 @@ Module Core
     If Config
       ExtractJSONStructure(JSONValue(Config), *Config, sConfig)
       Debug "[Core:Config] JSON loaded"
-      Debug "[Core:Config] >DefaultDir$: " + *Config\DefaultDir$
-      Debug "[Core:Config] >MaxThreads: "  + *Config\MaxThreads
+      Debug "[Core:Config] DefaultDir$: " + *Config\DefaultDir$
+      Debug "[Core:Config] MaxThreads: "  + *Config\MaxThreads
       ProcedureReturn #True
     Else
       Debug "[Core:Config] Init"
@@ -220,6 +221,13 @@ Module Core
     If Sub
       ExtractJSONList(JSONValue(Sub), Sub())
       Debug "[Core:Sub] Loaded, list size: " + ListSize(Sub())
+      ;# TEST
+      ForEach Sub()
+        If Sub()\Site$ = ""
+          Sub()\Site$ = LCase(StringField(Sub()\Url$, 2, "."))
+        EndIf
+      Next Sub()
+      ;# END TEST
       ProcedureReturn #True
     EndIf
   EndProcedure
@@ -239,7 +247,5 @@ Module Core
   
 EndModule
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 72
-; FirstLine = 71
-; Folding = L5
+; Folding = D5
 ; EnableXP
